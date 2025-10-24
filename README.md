@@ -1,94 +1,98 @@
-## Features
+# EProject Microservices (Node.js, MongoDB, RabbitMQ)
 
-- **Authentication service** for registering users, issuing JWTs, and protecting secured routes.
-- **Product service** that maintains product data and publishes product-related messages to RabbitMQ.
-- **Order service** that consumes product events, persists orders, and coordinates with RabbitMQ queues.
-- **API Gateway** that forwards external traffic to the individual services and centralises routing.
-- **Shared tooling** for testing with Mocha/Chai and end-to-end automation through GitHub Actions.
+Một project demo dựa trên kiến trúc microservices được xây dựng với Node.js, MongoDB và RabbitMQ, bao gồm các dịch vụ xác thực, quản lý sản phẩm và xử lý đơn hàng.
 
-## Architecture
+## Tính Năng
 
-| Component | Description | Default Port |
-| --- | --- | --- |
-| `auth` | Handles user registration, login, and token validation against MongoDB. | `3000` |
-| `product` | Manages the product catalogue and publishes events through RabbitMQ. | `3001` |
-| `order` | Accepts customer orders and reacts to product events via RabbitMQ. | `3002` |
-| `api-gateway` | Express + http-proxy entry point that routes `/auth`, `/products`, and `/orders` traffic. | `3003` |
-| `mongo` | MongoDB instance that stores data for the services. | `27017` |
-| `rabbitmq` | Message broker used for asynchronous communication between services. | `5672` (AMQP) / `15672` (management UI) |
+- **Dịch vụ xác thực** để đăng ký người dùng, cấp phát JWT và bảo vệ các route bảo mật.
+- **Dịch vụ sản phẩm** duy trì dữ liệu sản phẩm và gửi tin nhắn liên quan đến sản phẩm qua RabbitMQ.
+- **Dịch vụ đơn hàng** tiêu thụ các sự kiện sản phẩm, lưu trữ đơn hàng và điều phối với hàng đợi RabbitMQ.
+- **API Gateway** chuyển tiếp lưu lượng truy cập bên ngoài đến các dịch vụ riêng lẻ và tập trung việc định tuyến.
+- **Công cụ chia sẻ** để kiểm thử với Mocha/Chai và tự động hóa end-to-end thông qua GitHub Actions.
 
-The services communicate via REST over HTTP and publish/consume events on shared RabbitMQ queues (`orders`, `products`). Configuration defaults are provided in each service but can be overridden with environment variables.
+## Kiến Trúc
+
+| Thành Phần    | Mô Tả                                                                                    | Cổng Mặc Định                          |
+| ------------- | ---------------------------------------------------------------------------------------- | -------------------------------------- |
+| `auth`        | Xử lý đăng ký người dùng, đăng nhập và xác thực token với MongoDB.                      | `3000`                                 |
+| `product`     | Quản lý danh mục sản phẩm và gửi sự kiện qua RabbitMQ.                                  | `3001`                                 |
+| `order`       | Chấp nhận đơn hàng của khách hàng và phản ứng với các sự kiện sản phẩm qua RabbitMQ.    | `3002`                                 |
+| `api-gateway` | Express + http-proxy làm điểm vào định tuyến lưu lượng `/auth`, `/products`, `/orders`.  | `3003`                                 |
+| `mongo`       | Phiên bản MongoDB lưu trữ dữ liệu cho các dịch vụ.                                      | `27017`                                |
+| `rabbitmq`    | Message broker được sử dụng để giao tiếp bất đồng bộ giữa các dịch vụ.                  | `5672` (AMQP) / `15672` (giao diện quản lý) |
+
+Các dịch vụ giao tiếp qua REST over HTTP và publish/consume các sự kiện trên hàng đợi RabbitMQ chia sẻ (`orders`, `products`). Cấu hình mặc định được cung cấp trong mỗi dịch vụ nhưng có thể được ghi đè bằng các biến môi trường.
 
 ```
 .
-├── api-gateway        # Reverse proxy and routing layer
-├── auth               # Authentication service (MongoDB + JWT)
-├── order              # Order processing service (MongoDB + RabbitMQ consumer)
-├── product            # Product catalogue service (MongoDB + RabbitMQ publisher)
-├── utils              # Utility libraries shared between services
-├── docker-compose.yml # Spins up all services plus MongoDB & RabbitMQ
-└── .github/workflows  # Continuous integration pipeline definition
+├── api-gateway        # Lớp proxy ngược và định tuyến
+├── auth               # Dịch vụ xác thực (MongoDB + JWT)
+├── order              # Dịch vụ xử lý đơn hàng (MongoDB + RabbitMQ consumer)
+├── product            # Dịch vụ danh mục sản phẩm (MongoDB + RabbitMQ publisher)
+├── utils              # Thư viện tiện ích chia sẻ giữa các dịch vụ
+├── docker-compose.yml # Khởi động tất cả dịch vụ cộng với MongoDB & RabbitMQ
+└── .github/workflows  # Định nghĩa pipeline tích hợp liên tục
 ```
 
-### Environment configuration
+### Cấu Hình Môi Trường
 
-Each service reads its configuration from environment variables with sensible defaults:
+Mỗi dịch vụ đọc cấu hình từ các biến môi trường với giá trị mặc định hợp lý:
 
 - `auth`: `PORT`, `MONGODB_AUTH_URI`, `JWT_SECRET`.
 - `product`: `PORT`, `MONGODB_PRODUCT_URI`, `RABBITMQ_URI`, `RABBITMQ_ORDER_QUEUE`, `RABBITMQ_PRODUCT_QUEUE`, `JWT_SECRET`, `RABBITMQ_CONNECT_DELAY_MS`.
 - `order`: `PORT`, `MONGODB_ORDER_URI`, `RABBITMQ_URI`, `RABBITMQ_ORDER_QUEUE`, `RABBITMQ_PRODUCT_QUEUE`, `JWT_SECRET`, `RABBITMQ_CONNECT_DELAY_MS`.
-- `api-gateway`: `PORT`, `AUTH_SERVICE_URL`, `PRODUCT_SERVICE_URL`, `ORDER_SERVICE_URL` or their respective `_HOST`/`_PORT` overrides.
+- `api-gateway`: `PORT`, `AUTH_SERVICE_URL`, `PRODUCT_SERVICE_URL`, `ORDER_SERVICE_URL` hoặc các override `_HOST`/`_PORT` tương ứng.
 
-Copy the required variables into `.env` files under each service (e.g. `auth/.env`, `product/.env`, etc.) before running the stack.
+Sao chép các biến cần thiết vào file `.env` dưới mỗi dịch vụ (ví dụ: `auth/.env`, `product/.env`, v.v.) trước khi chạy stack.
 
-> **RabbitMQ credentials:** Docker Compose now provisions RabbitMQ with the `app` / `app` user. The services default to `amqp://app:app@rabbitmq:5672`, so update any custom `.env` files to match.
+> **Thông tin xác thực RabbitMQ:** Docker Compose hiện cung cấp RabbitMQ với user `app` / `app`. Các dịch vụ mặc định sử dụng `amqp://app:app@rabbitmq:5672`, vì vậy hãy cập nhật các file `.env` tùy chỉnh để khớp.
 
-### Run with Docker Compose
+### Chạy với Docker Compose
 
-1. Ensure Docker is running.
-2. Build and start the full stack:
+1. Đảm bảo Docker đang chạy.
+2. Build và khởi động toàn bộ stack:
 
    ```bash
    docker compose up --build
    ```
 
-3. Access the services through the API gateway at `http://localhost:3003`. The gateway proxies requests to `/auth`, `/products`, and `/orders`.
+3. Truy cập các dịch vụ thông qua API gateway tại `http://localhost:3003`. Gateway proxy các yêu cầu đến `/auth`, `/products`, và `/orders`.
 
-4. Stop the stack when you are done:
+4. Dừng stack khi hoàn thành:
 
    ```bash
    docker compose down
    ```
 
-### Run services locally (without Docker)
+### Chạy dịch vụ cục bộ (không có Docker)
 
-Each service can also be started from the host machine:
+Mỗi dịch vụ cũng có thể được khởi động từ máy host:
 
 ```bash
-# From the repository root
+# Từ thư mục gốc repository
 npm install
 
-# Install dependencies inside individual services if needed
+# Cài đặt dependencies bên trong các dịch vụ riêng lẻ nếu cần
 npm install --prefix auth
 npm install --prefix product
 npm install --prefix order
 npm install --prefix api-gateway
 
-# Start a service
+# Khởi động một dịch vụ
 npm start --prefix auth
 ```
 
-Ensure MongoDB and RabbitMQ are available locally (the defaults assume `localhost`).
+Đảm bảo MongoDB và RabbitMQ có sẵn cục bộ (mặc định giả định `localhost`).
 
-## Testing
+## Kiểm Thử
 
-Run the service-level test suites with Mocha/Chai via the repository root:
+Chạy bộ test cấp dịch vụ với Mocha/Chai từ thư mục gốc repository:
 
 ```bash
 npm test
 ```
 
-You can also target a specific service:
+Bạn cũng có thể nhắm mục tiêu một dịch vụ cụ thể:
 
 ```bash
 npm test --prefix auth
@@ -96,24 +100,23 @@ npm test --prefix product
 npm test --prefix order
 ```
 
-## Continuous Integration
+## Tích Hợp Liên Tục
 
-GitHub Actions runs the workflow defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on each push and pull request. The pipeline:
+GitHub Actions chạy workflow được định nghĩa trong [`.github/workflows/ci.yml`](.github/workflows/ci.yml) trên mỗi push và pull request. Pipeline:
 
-1. Checks out the repository and sets up Node.js 18 with npm caching.
-2. Installs dependencies and executes the shared test suite (`npm ci && npm test`).
-3. Builds Docker images for every service to catch Dockerfile regressions.
-4. On pushes to `main` or `master`, logs in to Docker Hub (using repository secrets) and pushes tagged images for each service.
+1. Checkout repository và thiết lập Node.js 18 với npm caching.
+2. Cài đặt dependencies và thực hiện bộ test chia sẻ (`npm ci && npm test`).
+3. Build Docker images cho mọi dịch vụ để bắt lỗi Dockerfile regression.
+4. Trên push đến `main` hoặc `master`, đăng nhập vào Docker Hub (sử dụng repository secrets) và đẩy tagged images cho mỗi dịch vụ.
 
-You can manually trigger the pipeline or monitor its status from the **Actions** tab in GitHub. The status badge at the top of this README reflects the most recent workflow run.
+Bạn có thể kích hoạt pipeline thủ công hoặc theo dõi trạng thái từ tab **Actions** trong GitHub. Status badge ở đầu README này phản ánh workflow run gần nhất.
 
-## Troubleshooting
+## Khắc Phục Sự Cố
 
-- RabbitMQ services may need a few seconds to accept connections. Adjust `RABBITMQ_CONNECT_DELAY_MS` in the service `.env` files if you encounter connection failures during startup.
-- If Docker builds cannot authenticate to Docker Hub, double-check that the `DOCKER_NAME` and `DOCKER_TOKEN` secrets are configured in your GitHub repository settings.
-- Remove `node_modules` directories before rebuilding containers if you experience mismatched native dependencies.
+- Các dịch vụ RabbitMQ có thể cần vài giây để chấp nhận kết nối. Điều chỉnh `RABBITMQ_CONNECT_DELAY_MS` trong file `.env` của dịch vụ nếu bạn gặp lỗi kết nối trong quá trình khởi động.
+- Nếu Docker builds không thể xác thực với Docker Hub, kiểm tra kỹ rằng các secrets `DOCKER_NAME` và `DOCKER_TOKEN` được cấu hình trong cài đặt GitHub repository.
+- Xóa thư mục `node_modules` trước khi rebuild containers nếu bạn gặp phải native dependencies không khớp.
 
+## Đóng Góp
 
-## Contributing
-
-Issues and pull requests are welcome! Please open a ticket describing the change, ensure tests pass locally, and link to any relevant GitHub Actions runs.
+Issues và pull requests được hoan nghênh! Vui lòng mở một ticket mô tả thay đổi, đảm bảo tests pass cục bộ, và liên kết đến bất kỳ GitHub Actions runs liên quan nào.
