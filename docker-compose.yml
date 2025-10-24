@@ -25,6 +25,10 @@ services:
       - auth/.env
     ports:
       - "3000:3000"
+    volumes:
+      - ./auth:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
     depends_on:
       - mongo
 
@@ -34,9 +38,14 @@ services:
       - product/.env
     ports:
       - "3001:3001"
+    volumes:
+      - ./product:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
     depends_on:
       - mongo
       - rabbitmq
+
 
   order:
     build: ./order
@@ -44,6 +53,10 @@ services:
       - order/.env
     ports:
       - "3002:3002"
+    volumes:
+      - ./order:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
     depends_on:
       - mongo
       - rabbitmq
@@ -52,6 +65,10 @@ services:
     build: ./api-gateway
     ports:
       - "3003:3003"
+    volumes:
+      - ./api-gateway:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
     depends_on:
       - auth
       - product

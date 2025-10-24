@@ -4,6 +4,11 @@ const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer();
 const app = express();
 
+app.use((req, res, next) => {
+  console.log(`[API Gateway][Docker] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 const AUTH_SERVICE_HOST = process.env.AUTH_SERVICE_HOST || "auth";
 const AUTH_SERVICE_PORT = process.env.AUTH_SERVICE_PORT || "3000";
 const PRODUCT_SERVICE_HOST = process.env.PRODUCT_SERVICE_HOST || "product";

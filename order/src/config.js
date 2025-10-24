@@ -6,7 +6,7 @@ const DEFAULT_RABBIT_URI = "amqp://guest:guest@rabbitmq";
 const DEFAULT_ORDER_QUEUE = "orders";
 const DEFAULT_PRODUCT_QUEUE = "products";
 const DEFAULT_JWT_SECRET = "secret";
-const DEFAULT_RABBIT_CONNECT_DELAY_MS = 10000;
+const DEFAULT_RABBIT_CONNECT_DELAY_MS = 30000;
 
 module.exports = {
   mongoURI: process.env.MONGODB_ORDER_URI || DEFAULT_MONGO_URI,

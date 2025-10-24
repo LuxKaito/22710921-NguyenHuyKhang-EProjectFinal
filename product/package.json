@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "mocha --timeout 20000 src/test/**/*.test.js --exit",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "node --watch index.js"
   },
   "keywords": [],
   "author": "",

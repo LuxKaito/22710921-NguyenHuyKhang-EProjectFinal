@@ -26,23 +26,26 @@ class App {
     console.log("MongoDB disconnected");
   }
 
-  setMiddlewares() {
+setMiddlewares() {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: false }));
+    this.app.use((req, res, next) => {
+      console.log(
+        `[Auth Service][Docker] ${req.method} ${req.originalUrl}`
+      );
+      next();
+    });
   }
 
   setRoutes() {
-   this.app.post("/login", (req, res) => {
-  console.log("[AUTH] POST /login called");
-  this.authController.login(req, res);
-});
-
-this.app.post("/register", (req, res) => {
-  console.log("[AUTH] POST /register called");
-  this.authController.register(req, res);
-});
-
-
+    this.app.post("/login", (req, res) => this.authController.login(req, res));
+    this.app.post("/register", (req, res) => this.authController.register(req, res));
+    this.app.get("/dashboard", authMiddleware, (req, res) => {
+      res.json({
+        message: "Welcome to dashsboard",
+        username: req.user.username,
+      });
+    });
   }
 
   start() {
